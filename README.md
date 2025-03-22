@@ -12,7 +12,7 @@
 version: '3'
 services:
   auditlimit:
-    image: xyhelper/auditlimit
+    image: lyy0709/auditlimit
     restart: always
     ports:
       - 9611:8080

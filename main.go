@@ -14,12 +14,14 @@ func main() {
 	s := g.Server()
 	s.SetPort(config.PORT)
 	s.BindHandler("/", Index)
-	s.BindHandler("/audit_limit", api.AuditLimit)
+	s.BindHandler("/chatgpt/audit_limit", api.GPTAuditLimit)
+	s.BindHandler("/claude/audit_limit", api.ClaudeAuditLimit)
+	s.BindHandler("/grok/audit_limit", api.GrokAuditLimit)
 	s.Run()
 }
 
 func Index(r *ghttp.Request) {
-	r.Response.Write("Hello Xyhelper,this is auditlimit")
+	r.Response.Write("Hello lyy0709,this is auditlimit")
 }
 
 func init() {
