@@ -161,7 +161,11 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 	if containsAny(ctx, prompt, config.ForbiddenWords) {
 		r.Response.Status = 400
 		r.Response.WriteJson(g.Map{
-			"error": "请珍惜账号,不要提问违禁内容.",
+			"type": "error",
+			"error": g.Map{
+				"type": "blocked content",
+				"message": "Please cherish your account, don't ask for forbidden content.\n请珍惜账号,不要提问违禁内容.",
+			},
 		})
 		return
 	}
@@ -207,7 +211,11 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 		if !reservation.OK() {
 			// 处理预留失败的情况，例如返回错误
 			r.Response.WriteJson(g.Map{
-				"error": "You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait a moment before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请稍后再试.",
+				"type": "error",
+				"error": g.Map{
+					"type": "rate limit exceeded",
+					"message": "You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait a moment before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请稍后再试.",
+				},
 			})
 			reservation.Cancel() // 取消预留，不消耗令牌
 			return
@@ -217,7 +225,11 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 
 		g.Log().Debug(ctx, "delayFrom", delayFrom)
 		r.Response.WriteJson(g.Map{
-			"error": "You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait " + gconv.String(int(delayFrom.Seconds())) + " seconds before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请等待 " + gconv.String(int(delayFrom.Seconds())) + " 秒后再试.",
+			"type": "error",
+			"error": g.Map{
+				"type": "rate limit exceeded",
+				"message": "You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait " + gconv.String(int(delayFrom.Seconds())) + " seconds before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请等待 " + gconv.String(int(delayFrom.Seconds())) + " 秒后再试.",
+			},
 		})
 		return
 	}
@@ -280,7 +292,11 @@ func GrokAuditLimit(r *ghttp.Request) {
 	if containsAny(ctx, prompt, config.ForbiddenWords) {
 		r.Response.Status = 400
 		r.Response.WriteJson(g.Map{
-			"error": "请珍惜账号,不要提问违禁内容.",
+			"error": g.Map{
+				"code": 13,
+				"message": "Don't ask for forbidden content.",
+				"detail": []string{"Please cherish your account, don't ask for forbidden content.\n请珍惜账号,不要提问违禁内容."},
+			},
 		})
 		return
 	}
@@ -326,7 +342,11 @@ func GrokAuditLimit(r *ghttp.Request) {
 		if !reservation.OK() {
 			// 处理预留失败的情况，例如返回错误
 			r.Response.WriteJson(g.Map{
-				"error": "You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait a moment before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请稍后再试.",
+				"error": g.Map{
+					"code": 13,
+					"message": "rate limit exceeded",
+					"detail": []string{"You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait a moment before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请稍后再试."},
+				},
 			})
 			reservation.Cancel() // 取消预留，不消耗令牌
 			return
@@ -336,7 +356,11 @@ func GrokAuditLimit(r *ghttp.Request) {
 
 		g.Log().Debug(ctx, "delayFrom", delayFrom)
 		r.Response.WriteJson(g.Map{
-			"error": "You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait " + gconv.String(int(delayFrom.Seconds())) + " seconds before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请等待 " + gconv.String(int(delayFrom.Seconds())) + " 秒后再试.",
+			"error": g.Map{
+				"code": 13,
+				"message": "rate limit exceeded",
+				"detail": []string{"You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait " + gconv.String(int(delayFrom.Seconds())) + " seconds before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请等待 " + gconv.String(int(delayFrom.Seconds())) + " 秒后再试."},
+			},
 		})
 		return
 	}
