@@ -276,8 +276,10 @@ func GrokAuditLimit(r *ghttp.Request) {
 		deepsearchPreset := reqJson.Get("deepsearchPreset").String()
 		if isReasoning && deepsearchPreset == "" {
 			model = "reasoning"
-		} else if !isReasoning && deepsearchPreset != "" {
+		} else if !isReasoning && deepsearchPreset == "deep" {
 			model = "deepsearch"
+		} else if !isReasoning && deepsearchPreset == "deeper" {
+			model = "deepersearch"
 		} else {
 			model = "grok3"
 		}
