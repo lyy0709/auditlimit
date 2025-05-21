@@ -15,18 +15,27 @@ services:
     image: lyy0709/auditlimit
     restart: always
     ports:
-      - 9611:8080
+      - "127.0.0.1:9611:8080"
+    volumes:
+      - ./data:/app/data
     environment:
+      PORT: 9611
       OAIKEY: "" # OpenAI API key 用于内容审核
-      AUTO: "200/3h"
-      TEXT-DAVINCI-002-RENDER-SHA: "200/3h"
-      GPT-4O-MINI: "200/3h"
-      GPT-4O: "60/3h"
-      GPT-4: "20/3h"
-      GPT-4O-CANMORE: "30/3h"
-      O1-PREVIEW: "7/24h"
-      O1-MINI: "50/24h" # 模型名称: "次数/时间" 时间单位: h(小时) m(分钟) s(秒)  模型名称要改成大写
-
+      CHATGPT-AUTO: "200/3h"
+      CHATGPT-TEXT-DAVINCI-002-RENDER-SHA: "200/3h"
+      CHATGPT-GPT-4O-MINI: "200/3h"
+      CHATGPT-GPT-4O: "60/3h"
+      CHATGPT-GPT-4: "20/3h"
+      CHATGPT-GPT-4O-CANMORE: "30/3h"
+      CHATGPT-O1-PREVIEW: "7/24h"
+      CHATGPT-O1-MINI: "50/24h"
+      CLAUDE-CLAUDE-3-7-SONNET: "20/3h"
+      CLAUDE-CLAUDE-3-5-HAIKU: "20/3h"
+      GROK-GROK2: "200/3h"
+      GROK-GROK3: "20/3h"
+      GROK-REASONING: "20/24h"
+      GROK-DEEPSEARCH: "20/24h"
+      
 ```
 
 然后执行
