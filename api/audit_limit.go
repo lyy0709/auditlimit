@@ -146,8 +146,14 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 
 	// Claude API请求参数解析
 	model := reqJson.Get("model").String() // 获取Claude模型名称
-	if model == "" {
+	if model == "" || model == "claude-sonnet-4-20250514-claude-ai" {
+		model = "claude-4-sonnet"
+	} else if model == "claude-opus-4-20250514-claude-ai-pro" {
+		model = "claude-4-opus"
+	} else if model == "claude-3-7-sonnet-20250219" {
 		model = "claude-3-7-sonnet"
+	} else if model == "claude-3-opus-20240229" {
+		model = "claude-3-opus"
 	} else if model == "claude-3-5-haiku-20241022" {
 		model = "claude-3-5-haiku"
 	}
@@ -269,9 +275,7 @@ func GrokAuditLimit(r *ghttp.Request) {
 	// Grok API请求参数解析
 	modelName := reqJson.Get("modelName").String()
 	var model string
-	if modelName == "grok-latest" {
-		model = "grok2"
-	} else if modelName == "grok-3" {
+	if modelName == "grok-3" {
 		isReasoning := reqJson.Get("isReasoning").Bool()
 		deepsearchPreset := reqJson.Get("deepsearchPreset").String()
 		if isReasoning && deepsearchPreset == "" {
