@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gogf/gf/v2/container/garray"
 	"github.com/gogf/gf/v2/encoding/gjson"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/net/ghttp"
@@ -40,6 +41,10 @@ func GPTAuditLimit(r *ghttp.Request) {
 
 	model := reqJson.Get("model").String() // 模型名称
 	g.Log().Debug(ctx, "model", model)
+	system_hints := reqJson.Get("system_hints").Strings() // 系统提示
+	systemHints := garray.NewStrArrayFrom(system_hints)
+
+	g.Log().Debug(ctx, "systemHints", systemHints)
 	prompt := reqJson.Get("messages.0.content.parts.0").String() // 输入内容
 	g.Log().Debug(ctx, "prompt", prompt)
 
@@ -74,6 +79,10 @@ func GPTAuditLimit(r *ghttp.Request) {
 			r.Response.WriteJson(MsgMod400)
 			return
 		}
+	}
+
+	if systemHints.ContainsI("research") {
+		model = "research"
 	}
 
 	// 为Claude模型添加前缀，以区分不同系统的模型
