@@ -81,8 +81,11 @@ func GPTAuditLimit(r *ghttp.Request) {
 		}
 	}
 
-	if systemHints.ContainsI("research") {
+	if systemHints.Contains("research") {
 		model = "research"
+	}
+	if systemHints.Contains("agent") {
+		model = "agent"
 	}
 
 	// 为Claude模型添加前缀，以区分不同系统的模型
