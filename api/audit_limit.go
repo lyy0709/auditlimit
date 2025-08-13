@@ -158,16 +158,20 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 
 	// Claude API请求参数解析
 	model := reqJson.Get("model").String() // 获取Claude模型名称
-	if model == "" || model == "claude-sonnet-4-20250514-claude-ai" {
+	if model == "" || strings.Contains(model, "claude-sonnet-4") {
 		model = "claude-4-sonnet"
-	} else if model == "claude-opus-4-20250514-claude-ai-pro" {
+	} else if strings.Contains(model, "claude-opus-4") {
 		model = "claude-4-opus"
-	} else if model == "claude-3-7-sonnet-20250219" {
+	} else if strings.Contains(model, "claude-3-7-sonnet") {
 		model = "claude-3-7-sonnet"
-	} else if model == "claude-3-opus-20240229" {
+	} else if strings.Contains(model, "claude-3-opus") {
 		model = "claude-3-opus"
-	} else if model == "claude-3-5-haiku-20241022" {
+	} else if strings.Contains(model, "claude-3-5-haiku") {
 		model = "claude-3-5-haiku"
+	} else if strings.Contains(model, "claude-opus-4-1") {
+		model = "claude-4-1-opus"
+	} else if strings.Contains(model, "claude-3-opus") {
+		model = "claude-3-opus"
 	}
 	g.Log().Debug(ctx, "model", model)
 
@@ -285,21 +289,7 @@ func GrokAuditLimit(r *ghttp.Request) {
 	}
 
 	// Grok API请求参数解析
-	modelName := reqJson.Get("modelName").String()
-	var model string
-	if modelName == "grok-3" {
-		isReasoning := reqJson.Get("isReasoning").Bool()
-		deepsearchPreset := reqJson.Get("deepsearchPreset").String()
-		if isReasoning && deepsearchPreset == "" {
-			model = "reasoning"
-		} else if !isReasoning && deepsearchPreset == "deep" {
-			model = "deepsearch"
-		} else if !isReasoning && deepsearchPreset == "deeper" {
-			model = "deepersearch"
-		} else {
-			model = "grok3"
-		}
-	}
+	model := reqJson.Get("modelName").String()
 	g.Log().Debug(ctx, "model", model)
 
 	// 获取提示内容（根据Grok API的实际结构调整）
