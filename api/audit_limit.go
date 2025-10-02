@@ -158,8 +158,8 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 
 	// Claude API请求参数解析
 	model := reqJson.Get("model").String() // 获取Claude模型名称
-	if model == "" || strings.Contains(model, "claude-sonnet-4") {
-		model = "claude-4-sonnet"
+	if model == "" || strings.Contains(model, "claude-sonnet-4-5") {
+		model = "claude-4-5-sonnet"
 	} else if strings.Contains(model, "claude-opus-4") {
 		model = "claude-4-opus"
 	} else if strings.Contains(model, "claude-3-7-sonnet") {
