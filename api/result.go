@@ -19,4 +19,13 @@ var (
 		}
 	}
 	`
+
+	MsgModelDisabled = `
+	{
+		"detail": {
+		  "code": "model_disabled",
+		  "message": "This model has been disabled and is not available for use."
+		}
+	}
+	`
 )

@@ -88,11 +88,17 @@ func GPTAuditLimit(r *ghttp.Request) {
 		model = "agent"
 	}
 
-	// 为Claude模型添加前缀，以区分不同系统的模型
+	// 为ChatGPT模型添加前缀，以区分不同系统的模型
 	chatgptModel := "CHATGPT-" + model
 	limit, per, limiter, err := GetVisitorWithModel(ctx, token, chatgptModel)
 	if err != nil {
 		g.Log().Error(ctx, "GetVisitorWithModel", err)
+		// 检查是否是模型被禁用的错误
+		if err.Error() == "该模型已被禁用" {
+			r.Response.Status = 403
+			r.Response.WriteJson(MsgModelDisabled)
+			return
+		}
 		r.Response.Status = 500
 		r.Response.WriteJson(g.Map{
 			"error": err.Error(),
@@ -185,7 +191,7 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 		r.Response.WriteJson(g.Map{
 			"type": "error",
 			"error": g.Map{
-				"type": "blocked content",
+				"type":    "blocked content",
 				"message": "Please cherish your account, don't ask for forbidden content.\n请珍惜账号,不要提问违禁内容.",
 			},
 		})
@@ -217,6 +223,18 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 	limit, per, limiter, err := GetVisitorWithModel(ctx, token, claudeModel)
 	if err != nil {
 		g.Log().Error(ctx, "GetVisitorWithModel", err)
+		// 检查是否是模型被禁用的错误
+		if err.Error() == "该模型已被禁用" {
+			r.Response.Status = 403
+			r.Response.WriteJson(g.Map{
+				"type": "error",
+				"error": g.Map{
+					"type":    "model_disabled",
+					"message": "This model has been disabled and is not available for use.\n该模型已被禁用，无法使用。",
+				},
+			})
+			return
+		}
 		r.Response.Status = 500
 		r.Response.WriteJson(g.Map{
 			"error": err.Error(),
@@ -235,7 +253,7 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 			r.Response.WriteJson(g.Map{
 				"type": "error",
 				"error": g.Map{
-					"type": "rate limit exceeded",
+					"type":    "rate limit exceeded",
 					"message": "You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait a moment before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请稍后再试.",
 				},
 			})
@@ -249,7 +267,7 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 		r.Response.WriteJson(g.Map{
 			"type": "error",
 			"error": g.Map{
-				"type": "rate limit exceeded",
+				"type":    "rate limit exceeded",
 				"message": "You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait " + gconv.String(int(delayFrom.Seconds())) + " seconds before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请等待 " + gconv.String(int(delayFrom.Seconds())) + " 秒后再试.",
 			},
 		})
@@ -301,9 +319,9 @@ func GrokAuditLimit(r *ghttp.Request) {
 		r.Response.Status = 400
 		r.Response.WriteJson(g.Map{
 			"error": g.Map{
-				"code": 13,
+				"code":    13,
 				"message": "Don't ask for forbidden content.",
-				"detail": []string{"Please cherish your account, don't ask for forbidden content.\n请珍惜账号,不要提问违禁内容."},
+				"detail":  []string{"Please cherish your account, don't ask for forbidden content.\n请珍惜账号,不要提问违禁内容."},
 			},
 		})
 		return
@@ -334,6 +352,18 @@ func GrokAuditLimit(r *ghttp.Request) {
 	limit, per, limiter, err := GetVisitorWithModel(ctx, token, grokModel)
 	if err != nil {
 		g.Log().Error(ctx, "GetVisitorWithModel", err)
+		// 检查是否是模型被禁用的错误
+		if err.Error() == "该模型已被禁用" {
+			r.Response.Status = 403
+			r.Response.WriteJson(g.Map{
+				"error": g.Map{
+					"code":    13,
+					"message": "model_disabled",
+					"detail":  []string{"This model has been disabled and is not available for use.\n该模型已被禁用，无法使用。"},
+				},
+			})
+			return
+		}
 		r.Response.Status = 500
 		r.Response.WriteJson(g.Map{
 			"error": err.Error(),
@@ -351,9 +381,9 @@ func GrokAuditLimit(r *ghttp.Request) {
 			// 处理预留失败的情况，例如返回错误
 			r.Response.WriteJson(g.Map{
 				"error": g.Map{
-					"code": 13,
+					"code":    13,
 					"message": "rate limit exceeded",
-					"detail": []string{"You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait a moment before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请稍后再试."},
+					"detail":  []string{"You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait a moment before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请稍后再试."},
 				},
 			})
 			reservation.Cancel() // 取消预留，不消耗令牌
@@ -365,9 +395,9 @@ func GrokAuditLimit(r *ghttp.Request) {
 		g.Log().Debug(ctx, "delayFrom", delayFrom)
 		r.Response.WriteJson(g.Map{
 			"error": g.Map{
-				"code": 13,
+				"code":    13,
 				"message": "rate limit exceeded",
-				"detail": []string{"You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait " + gconv.String(int(delayFrom.Seconds())) + " seconds before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请等待 " + gconv.String(int(delayFrom.Seconds())) + " 秒后再试."},
+				"detail":  []string{"You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait " + gconv.String(int(delayFrom.Seconds())) + " seconds before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请等待 " + gconv.String(int(delayFrom.Seconds())) + " 秒后再试."},
 			},
 		})
 		return

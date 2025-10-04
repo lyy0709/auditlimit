@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"strings"
 	"sync"
 	"time"
@@ -26,6 +27,10 @@ func GetVisitor(key string, limit int, per time.Duration) *rate.Limiter {
 
 	v, exists := visitors[key]
 	if !exists {
+		// 如果 limit 为 0，表示禁止使用该模型，返回 nil
+		if limit == 0 {
+			return nil
+		}
 		limiter := rate.NewLimiter(rate.Every(per/time.Duration(limit)), limit)
 		visitors[key] = &visitor{limiter, time.Now(), per}
 		return limiter
@@ -49,6 +54,12 @@ func GetVisitorWithModel(ctx g.Ctx, token, model string) (limit int, per time.Du
 	if err != nil {
 		return 0, 0, nil, err
 	}
+
+	// 如果 limit 为 0，表示禁止使用该模型
+	if limit == 0 {
+		return 0, 0, nil, errors.New("该模型已被禁用")
+	}
+
 	return limit, per, GetVisitor(token+"|"+model, limit, per), nil
 
 }
