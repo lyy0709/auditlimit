@@ -96,7 +96,9 @@ func GPTAuditLimit(r *ghttp.Request) {
 		// 检查是否是模型被禁用的错误
 		if err.Error() == "该模型已被禁用" {
 			r.Response.Status = 403
-			r.Response.WriteJson(MsgModelDisabled)
+			r.Response.WriteJson(g.Map{
+				"error": "This model has been disabled and is not available for use.\n" + "该模型已被禁用，无法使用。",
+			})
 			return
 		}
 		r.Response.Status = 500
@@ -193,6 +195,7 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 			"error": g.Map{
 				"type":    "blocked content",
 				"message": "Please cherish your account, don't ask for forbidden content.\n请珍惜账号,不要提问违禁内容.",
+				"details": g.Map{ "error_visibility": "user_facing" },
 			},
 		})
 		return
@@ -231,6 +234,7 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 				"error": g.Map{
 					"type":    "model_disabled",
 					"message": "This model has been disabled and is not available for use.\n该模型已被禁用，无法使用。",
+					"details": g.Map{ "error_visibility": "user_facing" },
 				},
 			})
 			return
@@ -255,6 +259,7 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 				"error": g.Map{
 					"type":    "rate limit exceeded",
 					"message": "You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait a moment before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请稍后再试.",
+					"details": g.Map{ "error_visibility": "user_facing" },
 				},
 			})
 			reservation.Cancel() // 取消预留，不消耗令牌
@@ -269,6 +274,7 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 			"error": g.Map{
 				"type":    "rate limit exceeded",
 				"message": "You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait " + gconv.String(int(delayFrom.Seconds())) + " seconds before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请等待 " + gconv.String(int(delayFrom.Seconds())) + " 秒后再试.",
+				"details": g.Map{ "error_visibility": "user_facing" },
 			},
 		})
 		return
