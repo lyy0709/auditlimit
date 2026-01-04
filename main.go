@@ -17,6 +17,7 @@ func main() {
 	s.BindHandler("/chatgpt/audit_limit", api.GPTAuditLimit)
 	s.BindHandler("/claude/audit_limit", api.ClaudeAuditLimit)
 	s.BindHandler("/grok/audit_limit", api.GrokAuditLimit)
+	s.BindHandler("/gemini/audit_limit", api.GeminiAuditLimit)
 	s.Run()
 }
 

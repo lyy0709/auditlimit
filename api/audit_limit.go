@@ -164,22 +164,13 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 		return
 	}
 
-	// Claude API请求参数解析
+	// Claude API请求参数解析 - 只区分 sonnet 和 opus 两种限速
 	model := reqJson.Get("model").String() // 获取Claude模型名称
-	if model == "" || strings.Contains(model, "claude-sonnet-4-5") {
-		model = "claude-4-5-sonnet"
-	} else if strings.Contains(model, "claude-opus-4") {
-		model = "claude-4-opus"
-	} else if strings.Contains(model, "claude-3-7-sonnet") {
-		model = "claude-3-7-sonnet"
-	} else if strings.Contains(model, "claude-3-opus") {
-		model = "claude-3-opus"
-	} else if strings.Contains(model, "claude-3-5-haiku") {
-		model = "claude-3-5-haiku"
-	} else if strings.Contains(model, "claude-opus-4-1") {
-		model = "claude-4-1-opus"
-	} else if strings.Contains(model, "claude-3-opus") {
-		model = "claude-3-opus"
+	if strings.Contains(strings.ToLower(model), "opus") {
+		model = "opus"
+	} else {
+		// 默认走 sonnet 限速（包括 sonnet、haiku 和空模型）
+		model = "sonnet"
 	}
 	g.Log().Debug(ctx, "model", model)
 
@@ -195,7 +186,7 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 			"error": g.Map{
 				"type":    "blocked content",
 				"message": "Please cherish your account, don't ask for forbidden content.\n请珍惜账号,不要提问违禁内容.",
-				"details": g.Map{ "error_visibility": "user_facing" },
+				"details": g.Map{"error_visibility": "user_facing"},
 			},
 		})
 		return
@@ -234,7 +225,7 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 				"error": g.Map{
 					"type":    "model_disabled",
 					"message": "This model has been disabled and is not available for use.\n该模型已被禁用，无法使用。",
-					"details": g.Map{ "error_visibility": "user_facing" },
+					"details": g.Map{"error_visibility": "user_facing"},
 				},
 			})
 			return
@@ -259,7 +250,7 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 				"error": g.Map{
 					"type":    "rate limit exceeded",
 					"message": "You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait a moment before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请稍后再试.",
-					"details": g.Map{ "error_visibility": "user_facing" },
+					"details": g.Map{"error_visibility": "user_facing"},
 				},
 			})
 			reservation.Cancel() // 取消预留，不消耗令牌
@@ -274,7 +265,7 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 			"error": g.Map{
 				"type":    "rate limit exceeded",
 				"message": "You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait " + gconv.String(int(delayFrom.Seconds())) + " seconds before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请等待 " + gconv.String(int(delayFrom.Seconds())) + " 秒后再试.",
-				"details": g.Map{ "error_visibility": "user_facing" },
+				"details": g.Map{"error_visibility": "user_facing"},
 			},
 		})
 		return
@@ -405,6 +396,118 @@ func GrokAuditLimit(r *ghttp.Request) {
 				"message": "rate limit exceeded",
 				"detail":  []string{"You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait " + gconv.String(int(delayFrom.Seconds())) + " seconds before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请等待 " + gconv.String(int(delayFrom.Seconds())) + " 秒后再试."},
 			},
+		})
+		return
+	}
+	// 消耗一个令牌
+	limiter.Allow()
+
+	r.Response.Status = 200
+}
+
+func GeminiAuditLimit(r *ghttp.Request) {
+	ctx := r.Context()
+	// 获取Bearer Token 用来判断用户身份
+	token := r.Header.Get("Authorization")
+	// 移除Bearer
+	if token != "" {
+		token = token[7:]
+	}
+	g.Log().Debug(ctx, "token", token)
+	// 获取gfsessionid 可以用来分析用户是否多设备登录
+	gfsessionid := r.Cookie.Get("gfsessionid").String()
+	g.Log().Debug(ctx, "gfsessionid", gfsessionid)
+	// 获取referer 可以用来判断用户请求来源
+	referer := r.Header.Get("referer")
+	g.Log().Debug(ctx, "referer", referer)
+	// 获取请求内容
+	reqJson, err := r.GetJson()
+	if err != nil {
+		g.Log().Error(ctx, "GetJson", err)
+		r.Response.Status = 400
+		r.Response.WriteJson(g.Map{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Gemini API请求参数解析
+	model := reqJson.Get("model").String()
+	g.Log().Debug(ctx, "model", model)
+
+	// // 判断提问内容是否包含禁止词
+	// if containsAny(ctx, prompt, config.ForbiddenWords) {
+	// 	r.Response.Status = 400
+	// 	r.Response.WriteJson(g.Map{
+	// 		"error": g.Map{
+	// 			"code":    13,
+	// 			"message": "Don't ask for forbidden content.",
+	// 			"detail":  []string{"Please cherish your account, don't ask for forbidden content.\n请珍惜账号,不要提问违禁内容."},
+	// 		},
+	// 	})
+	// 	return
+	// }
+
+	// // OPENAI Moderation 检测
+	// if config.OAIKEY != "" && prompt != "" {
+	// 	// 检测是否包含违规内容
+	// 	respVar := g.Client().SetHeaderMap(g.MapStrStr{
+	// 		"Authorization": "Bearer " + config.OAIKEY,
+	// 		"Content-Type":  "application/json",
+	// 	}).PostVar(ctx, config.MODERATION, g.Map{
+	// 		"input": prompt,
+	// 	})
+
+	// 	respJson := gjson.New(respVar)
+	// 	isFlagged := respJson.Get("results.0.flagged").Bool()
+	// 	g.Log().Debug(ctx, "flagged", isFlagged)
+	// 	if isFlagged {
+	// 		r.Response.Status = 400
+	// 		r.Response.WriteJson(MsgMod400)
+	// 		return
+	// 	}
+	// }
+
+	// 为Gemini模型添加前缀，以区分不同系统的模型
+	geminiModel := "GEMINI-" + model
+	limit, per, limiter, err := GetVisitorWithModel(ctx, token, geminiModel)
+	if err != nil {
+		g.Log().Error(ctx, "GetVisitorWithModel", err)
+		// 检查是否是模型被禁用的错误
+		if err.Error() == "该模型已被禁用" {
+			r.Response.Status = 403
+			r.Response.WriteJson(g.Map{
+				"error": "This model has been disabled and is not available for use.\n该模型已被禁用，无法使用。",
+			})
+			return
+		}
+		r.Response.Status = 500
+		r.Response.WriteJson(g.Map{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// 获取剩余次数
+	remain := limiter.TokensAt(time.Now())
+	g.Log().Debug(ctx, token, geminiModel, "remain", remain, "limit", limit, "per", per)
+	if remain < 1 {
+		r.Response.Status = 429
+		reservation := limiter.ReserveN(time.Now(), 1)
+		if !reservation.OK() {
+			// 处理预留失败的情况，例如返回错误
+			r.Response.WriteJson(g.Map{
+				"error": "You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait a moment before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请稍后再试。",
+			})
+			reservation.Cancel() // 取消预留，不消耗令牌
+			return
+		}
+		delayFrom := reservation.Delay()
+		reservation.Cancel() // 取消预留，不消耗令牌
+
+		g.Log().Debug(ctx, "delayFrom", delayFrom)
+		r.Response.WriteJson(g.Map{
+			"error": "You have triggered the usage frequency limit of " + model + ", the current limit is " + gconv.String(limit) + " times/" + gconv.String(per) + ", please wait " + gconv.String(int(delayFrom.Seconds())) + " seconds before trying again.\n" + "您已经触发 " + model + " 使用频率限制,当前限制为 " + gconv.String(limit) + " 次/" + gconv.String(per) + ",请等待 " + gconv.String(int(delayFrom.Seconds())) + " 秒后再试。",
 		})
 		return
 	}
