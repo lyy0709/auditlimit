@@ -21,6 +21,7 @@ services:
     environment:
       PORT: 9611
       OAIKEY: "" # OpenAI API key 用于内容审核
+      # ChatGPT 模型限速 (前缀 CHATGPT-, model字段直接拼接)
       CHATGPT-AUTO: "200/3h"
       CHATGPT-TEXT-DAVINCI-002-RENDER-SHA: "200/3h"
       CHATGPT-GPT-4O-MINI: "200/3h"
@@ -29,13 +30,23 @@ services:
       CHATGPT-GPT-4O-CANMORE: "30/3h"
       CHATGPT-O1-PREVIEW: "7/24h"
       CHATGPT-O1-MINI: "50/24h"
+      CHATGPT-GPT-5: "60/3h"
       CHATGPT-RESEARCH: "2/24h"
-      CLAUDE-CLAUDE-3-7-SONNET: "20/3h"
-      CLAUDE-CLAUDE-3-5-HAIKU: "20/3h"
-      GROK-GROK2: "200/3h"
-      GROK-GROK3: "20/3h"
+      CHATGPT-AGENT: "10/24h"
+      # Claude 模型限速 (代码将所有模型归一化为 sonnet/opus/haiku 三类)
+      CLAUDE-SONNET: "20/3h"
+      CLAUDE-OPUS: "20/3h"
+      CLAUDE-HAIKU: "20/3h"
+      # Grok 模型限速 (前缀 GROK-, modelName字段直接拼接)
+      GROK-GROK-3: "20/3h"
+      GROK-GROK-4: "20/3h"
+      GROK-GROK-4-AUTO: "20/3h"
       GROK-REASONING: "20/24h"
       GROK-DEEPSEARCH: "20/24h"
+      # Gemini 模型限速 (前缀 GEMINI-, model header直接拼接)
+      GEMINI-PRO: "20/3h"
+      GEMINI-FAST: "20/3h"
+      GEMINI-THINKING: "20/3h"
       
 ```
 
