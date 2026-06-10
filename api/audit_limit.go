@@ -164,12 +164,14 @@ func ClaudeAuditLimit(r *ghttp.Request) {
 		return
 	}
 
-	// Claude API请求参数解析 - 只区分 sonnet 和 opus 两种限速
+	// Claude API请求参数解析 - 区分 sonnet/opus/haiku/fable 四种限速
 	model := reqJson.Get("model").String() // 获取Claude模型名称
 	if strings.Contains(strings.ToLower(model), "opus") {
 		model = "opus"
 	} else if strings.Contains(strings.ToLower(model), "sonnet") {
 		model = "sonnet"
+	} else if strings.Contains(strings.ToLower(model), "fable") {
+		model = "fable"
 	} else {
 		model = "haiku"
 	}

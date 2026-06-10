@@ -22,10 +22,11 @@ services:
       CHATGPT-GPT-5: "60/3h"
       CHATGPT-RESEARCH: "2/24h"
       CHATGPT-AGENT: "10/24h"
-      # Claude 模型限速 (代码将所有模型归一化为 sonnet/opus/haiku 三类)
+      # Claude 模型限速 (代码将所有模型归一化为 sonnet/opus/haiku/fable 四类)
       CLAUDE-SONNET: "20/3h"
       CLAUDE-OPUS: "20/3h"
       CLAUDE-HAIKU: "20/3h"
+      CLAUDE-FABLE: "20/3h"
       # Grok 模型限速 (前缀 GROK-, modelName字段直接拼接)
       GROK-GROK-3: "20/3h"
       GROK-GROK-4: "20/3h"
